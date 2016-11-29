@@ -1,0 +1,7 @@
+{
+  "name": "Komoscope",
+  "short_name": "Komoscope",
+  "description": "Komoscope art website",
+  "start_url": "/",
+  "display": "standalone"
+}
