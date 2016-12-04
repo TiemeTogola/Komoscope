@@ -10,6 +10,10 @@
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animation-runner-behavior.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/slide-up-animation.html">
+<link rel="import" href="../../bower_components/neon-animation/animations/slide-from-top-animation.html">
+
 
 <!--
   TODO:
@@ -18,12 +22,14 @@
 //add pages: photography, multimedia, ...
 //big image that fades to black with title and navigation at the edge. condense on scroll...
 //random images slide on home page, go to relevant page on click
+//use animations in image viewers for transitions, see grid animation demo
+//transitions between site sections???
 //min-width
+//dom-repeat
 
 //non-google components
 //google-analytics
 //google-youtube
-//neon animations
 //app-localize-behavior
 
 //app-grid + iron-list
@@ -48,37 +54,31 @@
         display: block;
       }
       app-header {
-        height: 150px;
-        background-color: #444;
-        color: white;
-        /*--app-header-shadow*/
+        height: 80px;
+        background-color: #333;
       }
       app-toolbar {
-        height: 100px;
+        padding-top: 60px;
+      }
+      app-toolbar > span {
+        margin: auto;
       }
       [main-title] {
+        pointer-events: auto;
+        margin: auto;
         text-align: center;
-        font-weight: bold;
+        width: 20%;
+        padding-top: 10px;
         font-size: 30px;
-      }
-      /*[condensed-title] {
-        text-align: center;
         font-weight: bold;
-        font-size: 15px;
-      } */
+        outline: none;
+      }
       paper-button {
-        background-color:white;
+        height: 0;
+        background-color: beige;
       }
-      a:link {
-        text-decoration: none;
-      }
-      a:visited {
-        text-decoration: none;
-      }
-      a:hover {
-        text-decoration: none;
-      }
-      a:active {
+      a:link, a:visited, a:hover, a:active {
+        color: brown; 
         text-decoration: none;
       }
       .content {
@@ -95,14 +95,16 @@
     </app-route>
     
     <app-header-layout>
-      <!--TODO: custom scroll effect-->
-      <app-header effects="waterfall resize-snapped-title" condenses fixed>
+      <!--TODO: pull header in its own component?-->
+      <app-header reveals>
         <app-toolbar>
-          <a href="/" main-title top-item>KOMOSCOPE</a>
-          <a href="/artiste"><paper-button raised>L'artiste</paper-button></a>
-          <a href="/sculpture"><paper-button raised>Sculpture</paper-button></a>
-          <a href="/dessin"><paper-button raised>Dessin</paper-button></a>
-          <a href="/peinture"><paper-button raised>Peinture</paper-button></a>
+          <a href="/" tabindex="-1" main-title top-item>KOMOSCOPE</a>
+          <span>
+            <a href="/artiste" tabindex="-1"><paper-button raised>L'artiste</paper-button></a>
+            <a href="/sculpture" tabindex="-1"><paper-button raised>Sculpture</paper-button></a>
+            <a href="/dessin" tabindex="-1"><paper-button raised>Dessin</paper-button></a>
+            <a href="/peinture" tabindex="-1"><paper-button raised>Peinture</paper-button></a>
+          </span>
         </app-toolbar>
       </app-header>
 
@@ -133,7 +135,46 @@
           reflectToAttribute: true,
           observer: '_pageChanged'
         },
+
+        scrollPos: {
+          type: Number,
+          value: 0
+        },
+
+        animationConfig: {
+          type: Object,
+          value: function() {
+            return {
+              'entry': [{
+                name: 'slide-from-top-animation',
+                node: this.$$('span')
+              }],
+              'exit': [{
+                name: 'slide-up-animation',
+                node: this.$$('span')
+              }]
+            }
+          }
+        }
       },
+
+      ready: function() {
+        var me = this;
+        window.addEventListener('scroll', function() {
+          if (me.$$('app-header').style.transform.includes('-85')) {
+            me.$$('span').style.visibility = 'hidden';
+          } 
+          else if ((me.$$('span').style.visibility == 'hidden') && (window.scrollY < me.scrollPos)) {
+            me.$$('span').style.visibility = '';
+            me.playAnimation('entry', 'entry');
+          }
+          me.scrollPos = window.scrollY;
+        });
+      },
+
+      behaviors: [
+        Polymer.NeonAnimationRunnerBehavior
+      ],
 
       observers: [
         '_routePageChanged(routeData.page)'
@@ -152,7 +193,6 @@
       _showNotFoundPage: function() {
         this.page = 'notfound';
       }
-
     });
   </script>
 </dom-module>
