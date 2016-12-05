@@ -1,0 +1,12 @@
+{
+  "entrypoint": "index.html",
+  "shell": "src/Komoscope-app/Komoscope-app.html",
+  "sources": [
+    "src/**/*",
+    "bower.json"
+  ],
+  "includeDependencies": [
+    "bower_components/webcomponentsjs/webcomponents-lite.min.js",
+    "bower_components/bootstrap/dist/css/bootstrap.min.css"
+  ]
+}
