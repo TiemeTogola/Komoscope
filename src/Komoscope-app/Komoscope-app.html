@@ -1,7 +1,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 
 <link rel="import" href="../../bower_components/app-layout/app-header-layout/app-header-layout.html">
-<link rel="import" href="/bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
 <link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
 <link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
@@ -16,14 +16,14 @@
 
 <!--
   TODO:
+  auto deploy with travis ci
 //https
 //options for changing the visualization configuration of the gallery
-//add pages: photography, multimedia, ...
+//add pages: photography, multimedia, sound recordings, music player...
 //big image that fades to black with title and navigation at the edge. condense on scroll...
 //random images slide on home page, go to relevant page on click
 //use animations in image viewers for transitions, see grid animation demo
 //transitions between site sections???
-//min-width
 //dom-repeat
 
 //non-google components
@@ -37,7 +37,6 @@
 //paper-dialog
 //paper-fab
 //paper-dropdown-menu
-//paper-icon-button
 //paper-material
 //paper-tabs
 //paper-tooltip
@@ -51,6 +50,9 @@
     <style>
       :host {
         display: block;
+      }
+      app-header-layout {
+        background-color: gray;
       }
       app-header {
         height: 80px;
@@ -74,10 +76,13 @@
       }
       paper-button {
         height: 0;
-        background-color: beige;
+        background-color: ivory;
+        --paper-button-raised-keyboard-focus: {
+          font-weight: normal;
+        };
       }
       a:link, a:visited, a:hover, a:active {
-        color: brown; 
+        color: darkcyan;
         text-decoration: none;
       }
       .content {
@@ -97,7 +102,7 @@
       <!--TODO: pull header in its own component?-->
       <app-header reveals>
         <app-toolbar>
-          <a href="/" tabindex="-1" main-title top-item>KOMOSCOPE</a>
+          <a href="/" main-title top-item>KOMOSCOPE</a>
           <span>
             <a href="/artiste" tabindex="-1"><paper-button raised>L'artiste</paper-button></a>
             <a href="/sculpture" tabindex="-1"><paper-button raised>Sculpture</paper-button></a>
@@ -113,11 +118,11 @@
           attr-for-selected="name"
           fallback-selection="notfound">
           <!--different components for each page-->
-        <div name="" style="background-color:gray;height:100%"></div>
-        <div name="artiste" style="background-color:black;height:100%"></div>
-        <div name="sculpture" style="background-color:brown;height:100%"></div>
-        <div name="dessin" style="background-color:blue;height:100%"></div>
-        <div name="peinture" style="background-color:green;height:100%"></div>
+        <div name="" style="background-color:transparent;height:100%"></div>
+        <div name="artiste" style="background-color:transparent;height:100%"></div>
+        <div name="sculpture" style="background-color:transparent;height:100%"></div>
+        <div name="dessin" style="background-color:transparent;height:100%"></div>
+        <div name="peinture" style="background-color:transparent;height:100%"></div>
         <div name="notfound" style="background-color:red;height:100%"></div>
       </iron-pages>
     </app-header-layout>
@@ -156,14 +161,7 @@
       ready: function() {
         var me = this;
         window.addEventListener('scroll', function() {
-          if (me.$$('app-header').style.transform.includes('-85')) {
-            me.$$('span').style.visibility = 'hidden';
-          } 
-          else if ((me.$$('span').style.visibility == 'hidden') && (window.scrollY < me.scrollPos)) {
-            me.$$('span').style.visibility = '';
-            me.playAnimation('entry');
-          }
-          me.scrollPos = window.scrollY;
+          me.updateNavDisplay(me);
         });
       },
 
@@ -187,6 +185,17 @@
 
       _showNotFoundPage: function() {
         this.page = 'notfound';
+      },
+
+      updateNavDisplay: function(me) {
+          if (me.$$('app-header').style.transform.includes('-85')) {
+            me.$$('span').style.visibility = 'hidden';
+          } 
+          else if ((me.$$('span').style.visibility == 'hidden') && (window.scrollY < me.scrollPos)) {
+            me.$$('span').style.visibility = '';
+            me.playAnimation('entry');
+          }
+          me.scrollPos = window.scrollY;
       }
     });
   </script>
