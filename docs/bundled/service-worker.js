@@ -29,7 +29,7 @@
 
 
 /* eslint-disable quotes, comma-spacing */
-var PrecacheConfig = [["/index.html","73c2d520bd92e95d2d4b2d05eb640835"],["/src/Komoscope-app/Komoscope-app.html","34b8e88556a363a314c9eb40de673fc9"]];
+var PrecacheConfig = [["/index.html","73c2d520bd92e95d2d4b2d05eb640835"],["/src/Komoscope-app/Komoscope-app.html","3e5cc6ec427a1f0989248cfe4dfe0a46"]];
 /* eslint-enable quotes, comma-spacing */
 var CacheNamePrefix = 'sw-precache-v1--' + (self.registration ? self.registration.scope : '') + '-';
 
