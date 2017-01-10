@@ -1,3 +1,5 @@
+#!/bin/bash
+
 git diff-index --quiet HEAD --
 status=$?
 
