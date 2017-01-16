@@ -9,14 +9,15 @@
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-image/iron-image.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/neon-animation/neon-animation-runner-behavior.html">
 <link rel="import" href="../../bower_components/neon-animation/animations/slide-from-top-animation.html">
+<link rel="import" href="../../bower_components/polymer-simple-slider/simple-slider.html">
 
 
 <!--
   TODO:
-//https
 //options for changing the visualization configuration of the gallery
 //add pages: photography, multimedia, sound recordings, music player...
 //big image that fades to black with title and navigation at the edge. condense on scroll...
@@ -25,8 +26,6 @@
 //transitions between site sections???
 //dom-repeat
 
-//non-google components
-//google-analytics
 //google-youtube
 //app-localize-behavior
 
@@ -96,7 +95,7 @@
       data="{{routeData}}"
       tail="{{routeTail}}">
     </app-route>
-    
+
     <app-header-layout>
       <!--TODO: pull header in its own component?-->
       <app-header reveals>
@@ -117,8 +116,19 @@
           attr-for-selected="name"
           fallback-selection="notfound">
           <!--different components for each page-->
-        <div name="" style="background-color:transparent;height:100%"></div>
-        <div name="artiste" style="background-color:transparent;height:100%"></div>
+        <div name="" style="background-color:transparent;height:100%">
+          <simple-slider style="width:700px; height:500px; border:solid 1px blue; padding-left:40px"
+              transition-property="opacity"
+              start-value="0"
+              visible-value="1"
+              end-value="0">
+            <img src="/p1.jpg" height="500" width="500"/>
+            <img src="/p2.jpg" height="500" width="500"/>
+          </simple-slider>
+        </div>
+        <div name="artiste" style="background-color:transparent;height:100%">
+          <iron-image alt="L'artiste au travail" src="/mamadou_dehors.jpg"></iron-image>
+        </div>
         <div name="sculpture" style="background-color:transparent;height:100%"></div>
         <div name="dessin" style="background-color:transparent;height:100%"></div>
         <div name="peinture" style="background-color:transparent;height:100%"></div>
@@ -189,7 +199,7 @@
       updateNavDisplay: function(me) {
           if (me.$$('app-header').style.transform.includes('-85')) {
             me.$$('span').style.visibility = 'hidden';
-          } 
+          }
           else if ((me.$$('span').style.visibility == 'hidden') && (window.scrollY < me.scrollPos)) {
             me.$$('span').style.visibility = '';
             me.playAnimation('entry');
