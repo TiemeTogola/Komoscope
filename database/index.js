@@ -18,6 +18,7 @@ function defaultCallback(err, data) {
     else context.done();
 }
 
+// Update item, or insert if already exists
 function upsert(params, key, itemIsMain) {
 
     if (itemIsMain) {
@@ -31,6 +32,7 @@ function upsert(params, key, itemIsMain) {
     dynamodb.update(params, defaultCallback);
 }
 
+// Remote item attribute, or whole item if all related S3 objects are gone
 function remove(params, key, itemIsMain) {
 
     if (itemIsMain) {
@@ -43,6 +45,7 @@ function remove(params, key, itemIsMain) {
     var itemIsEmpty = false;
     params.ReturnValues = 'ALL_NEW';
 
+    // Update and check state of index item
     dynamodb.update(params, function(err, data){
         if (err) {
             context.done('Error updating index:' + err);
@@ -56,6 +59,7 @@ function remove(params, key, itemIsMain) {
     if (itemIsEmpty) dynamodb.delete(params, defaultCallback);
 }
 
+// Parse event information
 function updateIndex(eventType, bucket, key) {
     /*
      * Naming conventions:
@@ -65,7 +69,7 @@ function updateIndex(eventType, bucket, key) {
      * table/category/filename
      *
      * 0filename means filename is main file for this object
-     * #filename, other numbers indicate alt file clockwise
+     * #filename, other numbers indicate alt files
      */
 
     var tokens = key.split('/');
@@ -100,6 +104,7 @@ function updateIndex(eventType, bucket, key) {
     else if (eventType.includes(REMOVE_EVENT)) remove(params, key, itemIsMain);
 }
 
+// Entry point
 exports.handler = function(event, context) {
     var record = event.Records[0];
     var eventType = record.eventName;
