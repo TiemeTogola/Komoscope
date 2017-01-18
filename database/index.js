@@ -23,10 +23,10 @@ function defaultCallback(err, data) {
 function upsert(params, key, itemIsMain, context) {
 
     if (itemIsMain) {
-        params.ExpressionAttributeValues[":key"] = key;
+        params.ExpressionAttributeValues = { ":key": key };
         params.UpdateExpression = 'SET itemurl = :key';
     } else {
-        params.ExpressionAttributeValues[":key"] = dynamodb.createSet([key]);
+        params.ExpressionAttributeValues = { ":key": dynamodb.createSet([key]) };
         params.UpdateExpression = 'ADD alturls :key';
     }
 
@@ -42,7 +42,7 @@ function remove(params, key, itemIsMain, context) {
     if (itemIsMain) {
         params.UpdateExpression = 'REMOVE itemurl';
     } else {
-        params.ExpressionAttributeValues[":key"] = dynamodb.createSet([key]);
+        params.ExpressionAttributeValues = { ":key": dynamodb.createSet([key]) };
         params.UpdateExpression = 'DELETE alturls :key';
     }
 
@@ -59,11 +59,14 @@ function remove(params, key, itemIsMain, context) {
         }
     });
 
+    console.log('******** ' + itemIsEmpty);
     // Delete item if all related s3 objects are gone
-    if (itemIsEmpty) dynamodb.delete(params, function(err, data) {
-        if (err) context.done('Error updating index:' + err);
-        else context.done();
-    });
+    if (itemIsEmpty) {
+        dynamodb.delete(params, function(err, data) {
+            if (err) context.done('Error updating index:' + err);
+            else context.done();
+        });
+    }
 }
 
 // Parse event information
@@ -104,8 +107,7 @@ function updateIndex(eventType, bucket, key, context) {
         Key: {
             category: itemCategory,
             name: itemName
-        },
-        ExpressionAttributeValues: {}
+        }
     };
 
     if (eventType.includes(CREATE_EVENT)) upsert(params, key, itemIsMain, context);
