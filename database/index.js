@@ -10,17 +10,17 @@ const CREATE_EVENT = 'ObjectCreated';
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3('2006-03-01');
 var dynamodb = new AWS.DynamoDB.DocumentClient('2012-08-10');
-var globalContext;
 
 // TODO: test... generate events and use localdynamo
-
+/*
 function defaultCallback(err, data) {
-    if (err) globalContext.done('Error updating index:' + err);
-    else globalContext.done();
+    if (err) context.done('Error updating index:' + err);
+    else context.done();
 }
+*/
 
 // Update item, or insert if already exists
-function upsert(params, key, itemIsMain) {
+function upsert(params, key, itemIsMain, context) {
 
     if (itemIsMain) {
         params.ExpressionAttributeValues[":key"] = key;
@@ -30,11 +30,14 @@ function upsert(params, key, itemIsMain) {
         params.UpdateExpression = 'ADD alturls :key';
     }
 
-    dynamodb.update(params, defaultCallback);
+    dynamodb.update(params, function(err, data) {
+        if (err) context.done('Error updating index:' + err);
+        else context.done();
+    });
 }
 
 // Remote item attribute, or whole item if all related S3 objects are gone
-function remove(params, key, itemIsMain) {
+function remove(params, key, itemIsMain, context) {
 
     if (itemIsMain) {
         params.UpdateExpression = 'REMOVE itemurl';
@@ -49,7 +52,7 @@ function remove(params, key, itemIsMain) {
     // Update and check state of index item
     dynamodb.update(params, function(err, data){
         if (err) {
-            globalContext.done('Error updating index:' + err);
+            context.done('Error updating index:' + err);
         } else {
             var item = data.Attributes;
             if (item) itemIsEmpty = !('itemurl' in item) && !('alturls' in item);
@@ -57,11 +60,14 @@ function remove(params, key, itemIsMain) {
     });
 
     // Delete item if all related s3 objects are gone
-    if (itemIsEmpty) dynamodb.delete(params, defaultCallback);
+    if (itemIsEmpty) dynamodb.delete(params, function(err, data) {
+        if (err) context.done('Error updating index:' + err);
+        else context.done();
+    });
 }
 
 // Parse event information
-function updateIndex(eventType, bucket, key) {
+function updateIndex(eventType, bucket, key, context) {
     /*
      * Naming conventions:
      *
@@ -77,7 +83,7 @@ function updateIndex(eventType, bucket, key) {
 
     // Ignore folder events and invalid paths
     if ((key.charAt(key.length-1) == '/') || (tokens.length < 3)) {
-        globalContext.done('Ignoring event');
+        context.done('Ignoring event');
         return;
     }
 
@@ -102,13 +108,12 @@ function updateIndex(eventType, bucket, key) {
         ExpressionAttributeValues: {}
     };
 
-    if (eventType.includes(CREATE_EVENT)) upsert(params, key, itemIsMain);
-    else if (eventType.includes(REMOVE_EVENT)) remove(params, key, itemIsMain);
+    if (eventType.includes(CREATE_EVENT)) upsert(params, key, itemIsMain, context);
+    else if (eventType.includes(REMOVE_EVENT)) remove(params, key, itemIsMain, context);
 }
 
 // Entry point
 exports.handler = function(event, context) {
-    var globalContext = context;
     var record = event.Records[0];
     var eventType = record.eventName;
     var object = record.s3.object;
@@ -121,8 +126,8 @@ exports.handler = function(event, context) {
     console.log(eventType + ': ' + bucket + '/' + key);
 
     try {
-        updateIndex(eventType, bucket, key);
+        updateIndex(eventType, bucket, key, context);
     } catch(err) {
-        globalContext.done('Exception thrown: ' + err);
+        context.done('Exception thrown: ' + err);
     }
 };
