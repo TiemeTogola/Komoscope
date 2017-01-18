@@ -11,19 +11,50 @@ var AWS = require('aws-sdk');
 var s3 = new AWS.S3('2006-03-01');
 var dynamodb = new AWS.DynamoDB.DocumentClient('2012-08-10');
 
-// TODO: test...
+// TODO: test... generate events and use localdynamo
 
-// CASES always use update?
-// single:
-//  rm-> del
-//  cr-> SET url = :i
-// multi:
-//  rm->
-//      main-> SET url = alturls[0], REMOVE alturls[0] if alturls exists | use returnvals all_new or error code to del if empty alts
-//      alt-> REMOVE alturls[:n]
-//  cr->
-//      main-> SET url = :i
-//      alt-> SET alturls = list_append(alturls, :il), url = if_not_exists(url, :i)
+function defaultCallback(err, data) {
+    if (err) context.done('Error updating index:' + err);
+    else context.done();
+}
+
+function upsert(params, key, itemIsMain) {
+
+    if (itemIsMain) {
+        params.ExpressionAttributeValues[":key"] = key;
+        params.UpdateExpression = 'SET itemurl = :key;
+    } else {
+        params.ExpressionAttributeValues[":key"] = dynamodb.createSet([key]);
+        params.UpdateExpression = 'ADD alturls :key';
+    }
+
+    dynamodb.update(params, defaultCallback);
+}
+
+function remove(params, key, itemIsMain) {
+
+    if (itemIsMain) {
+        params.UpdateExpression = 'REMOVE itemurl;
+    } else {
+        params.ExpressionAttributeValues[":key"] = dynamodb.createSet([key]);
+        params.UpdateExpression = 'DELETE alturls :key';
+    }
+
+    var itemIsEmpty = false;
+    params.ReturnValues = 'ALL_NEW';
+
+    dynamodb.update(params, function(err, data){
+        if (err) {
+            context.done('Error updating index:' + err);
+        } else {
+            var item = data.Attributes;
+            itemIsEmpty = !('itemurl' in item) && !('alturls' in item);
+        }
+    });
+
+    // Delete item if all related s3 objects are gone
+    if (itemIsEmpty) dynamodb.delete(params, defaultCallback);
+}
 
 function updateIndex(eventType, bucket, key) {
     /*
@@ -48,11 +79,10 @@ function updateIndex(eventType, bucket, key) {
     var itemTable = tokens[0];
     var itemCategory = tokens[1];
     var itemName = tokens[2]; // TODO: get name from elsewhere
-    var itemUrl = key;
-    var isMain = true;
+    var itemIsMain = true;
 
     if (tokens.length == 4) {
-        isMain = (tokens[3][0] == '0');
+        itemIsMain  = (tokens[3][0] == '0');
     } else {
         // Remove file extension from name
         itemName = itemName.split('.')[0];
@@ -66,31 +96,8 @@ function updateIndex(eventType, bucket, key) {
         }
     };
 
-    if (eventType.includes(CREATE_EVENT)) {
-        params.UpdateExpression = 'set ...';
-        params.ExpressionAttributeValues = {
-                "url": '',
-                "alturls": []
-        };
-        dynamodb.update(params, function(err, data){
-            if (err) {
-                context.done('Error updating index item to ' + itemTable + '\n' + err);
-            } else {
-                context.done();
-            }
-            return;
-        });
-    } else if (eventType.includes(REMOVE_EVENT)) {
-        // TODO: MIGHT STILL WANT TO USE UPDATE EG: JUST DELETING AN ALT IMAGE
-        dynamodb.delete(params, function(err, data){
-            if (err) {
-                context.done('Error removing index item from ' + itemTable + '\n' + err);
-            } else {
-                context.done();
-            }
-            return;
-        });
-    }
+    if (eventType.includes(CREATE_EVENT)) upsert(params, key, itemIsMain);
+    else if (eventType.includes(REMOVE_EVENT)) remove(params, key, itemIsMain);
 }
 
 exports.handler = function(event, context) {
@@ -105,10 +112,9 @@ exports.handler = function(event, context) {
 
     console.log(eventType + ': ' + bucket + '/' + key);
 
-    //try {
-        //updateIndex(eventType, bucket, key);
-    //} catch(err) {
-        //context.done('Exception thrown: ' + err);
-        //return;
-    //}
+    try {
+        updateIndex(eventType, bucket, key);
+    } catch(err) {
+        context.done('Exception thrown: ' + err);
+    }
 };
