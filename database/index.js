@@ -23,7 +23,7 @@ function upsert(params, key, itemIsMain) {
 
     if (itemIsMain) {
         params.ExpressionAttributeValues[":key"] = key;
-        params.UpdateExpression = 'SET itemurl = :key;
+        params.UpdateExpression = 'SET itemurl = :key';
     } else {
         params.ExpressionAttributeValues[":key"] = dynamodb.createSet([key]);
         params.UpdateExpression = 'ADD alturls :key';
@@ -36,7 +36,7 @@ function upsert(params, key, itemIsMain) {
 function remove(params, key, itemIsMain) {
 
     if (itemIsMain) {
-        params.UpdateExpression = 'REMOVE itemurl;
+        params.UpdateExpression = 'REMOVE itemurl';
     } else {
         params.ExpressionAttributeValues[":key"] = dynamodb.createSet([key]);
         params.UpdateExpression = 'DELETE alturls :key';
