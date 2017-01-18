@@ -10,12 +10,13 @@ const CREATE_EVENT = 'ObjectCreated';
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3('2006-03-01');
 var dynamodb = new AWS.DynamoDB.DocumentClient('2012-08-10');
+var globalContext;
 
 // TODO: test... generate events and use localdynamo
 
 function defaultCallback(err, data) {
-    if (err) context.done('Error updating index:' + err);
-    else context.done();
+    if (err) globalContext.done('Error updating index:' + err);
+    else globalContext.done();
 }
 
 // Update item, or insert if already exists
@@ -48,10 +49,10 @@ function remove(params, key, itemIsMain) {
     // Update and check state of index item
     dynamodb.update(params, function(err, data){
         if (err) {
-            context.done('Error updating index:' + err);
+            globalContext.done('Error updating index:' + err);
         } else {
             var item = data.Attributes;
-            itemIsEmpty = !('itemurl' in item) && !('alturls' in item);
+            if (item) itemIsEmpty = !('itemurl' in item) && !('alturls' in item);
         }
     });
 
@@ -76,7 +77,7 @@ function updateIndex(eventType, bucket, key) {
 
     // Ignore folder events and invalid paths
     if ((key.charAt(key.length-1) == '/') || (tokens.length < 3)) {
-        context.done('Ignoring event');
+        globalContext.done('Ignoring event');
         return;
     }
 
@@ -97,7 +98,8 @@ function updateIndex(eventType, bucket, key) {
         Key: {
             category: itemCategory,
             name: itemName
-        }
+        },
+        ExpressionAttributeValues: {}
     };
 
     if (eventType.includes(CREATE_EVENT)) upsert(params, key, itemIsMain);
@@ -106,6 +108,7 @@ function updateIndex(eventType, bucket, key) {
 
 // Entry point
 exports.handler = function(event, context) {
+    var globalContext = context;
     var record = event.Records[0];
     var eventType = record.eventName;
     var object = record.s3.object;
@@ -120,6 +123,6 @@ exports.handler = function(event, context) {
     try {
         updateIndex(eventType, bucket, key);
     } catch(err) {
-        context.done('Exception thrown: ' + err);
+        globalContext.done('Exception thrown: ' + err);
     }
 };
