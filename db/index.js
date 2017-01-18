@@ -1,47 +1,70 @@
 /*
  * Process events triggered by S3 and update DynamoDB index.
  * Inspired by aws-blog-s3-index-with-lambda-ddb.
- *
+ * Note: renaming objects triggers both ObjectCreated and ObjectRemoved.
  */
 
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3('2006-03-01');
-var dynamodb = new AWS.DynamoDB('2012-08-10').DocumentClient();
+var dynamodb = new AWS.DynamoDB.DocumentClient('2012-08-10');
+
+// TODO: test...
 
 
 function updateIndex(eventType, bucket, key) {
-    //TODO: check if main image, will have underscore as first character of filename
-    // keyregex?
+    /*
+     * Naming conventions:
+     *
+     * table/category/name/filename
+     * or
+     * table/category/filename
+     *
+     * _filename means filename is main file for this object
+     */
 
-    // oeuvres/sculpture/transe/main.jpg
-    // table/category/name/filename
-    // table/category/filename
-    var table = key.substring(0, key.indexOf('/')); //match[0]
-    var category;
-    // TODO: get name from elsewhere
-    var name;
+    var tokens = key.split('/');
+
+    // Ignore folder events and invalid paths
+    if ((key.charAt(key.length-1) == '/') || (tokens.length < 3)) {
+        context.done('Ignoring event');
+        return;
+    }
+
+    var itemTable = tokens[0];
+    var itemCategory = tokens[1];
+    var itemName = tokens[2]; // TODO: get name from elsewhere
+    var itemUrl = key;
+
+    if (tokens.length == 4) {
+        // Determine if main or alternative file
+        if (tokens[3][0] == '_') {
+
+        } else {
+
+        }
+    } else {
+        // Remove file extension from name
+        itemName = itemName.split('.')[0];
+    }
 
     var params = {
-        TableName: table,
+        TableName: itemTable,
         Item: {
-            //
-            category: match[1],
-            name: match[2], // if no match 2, grab filename and no alturls
-            url: key,
-            alturls: ...
+            category: itemCategory,
+            name: itemName,
+            url: '',
+            alturls: []
         }
     };
 
-    dynamodb.put(params, function(err, data){
+    dynamodb.update(params, function(err, data){
         if (err) {
-            context.done("Error adding index item to " + table + "\n" + err);
+            context.done('Error adding index item to ' + table + '\n' + err);
         } else {
             context.done();
         }
         return;
     });
-    // TODO: update, delete. use this same module for both create and delete s3 trigger events
-    // confirm that renaming triggers a create event AND a delete event for the old name
 }
 
 exports.handler = function(event, context) {
@@ -50,15 +73,16 @@ exports.handler = function(event, context) {
     var object = record.s3.object;
     var bucket = record.s3.bucket.name;
 
-    // TODO: update object in s3 to replace spaces with underscores
-    var key = decodeURIComponent(object.key.replace(/\+/g, " "));
+    // TODO: process events in batches???
+    // TODO: update object in s3 to replace spaces with underscores (check that name is available)
+    var key = decodeURIComponent(object.key.replace(/\+/g, ' '));
 
-    console.log("Indexing " + bucket + "/" + key);
+    console.log(eventType + ': ' + bucket + '/' + key);
 
-    try {
-        updateIndex(eventType, bucket, key);
-    } catch(err) {
-        context.done("Exception thrown: " + err);
-        return;
-    }
+    //try {
+        //updateIndex(eventType, bucket, key);
+    //} catch(err) {
+        //context.done('Exception thrown: ' + err);
+        //return;
+    //}
 };
