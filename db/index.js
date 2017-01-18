@@ -1,6 +1,6 @@
 /*
- * Process events triggered by S3 and update DynamoDB index.
- * Inspired by aws-blog-s3-index-with-lambda-ddb.
+ * AWS Lambda function that processes events triggered by S3 to update a DynamoDB index.
+ * (Inspired by aws-blog-s3-index-with-lambda-ddb)
  */
 
 // Note: renaming objects triggers both ObjectCreated and ObjectRemoved.
@@ -11,20 +11,19 @@ var AWS = require('aws-sdk');
 var s3 = new AWS.S3('2006-03-01');
 var dynamodb = new AWS.DynamoDB.DocumentClient('2012-08-10');
 
-// TODO: sync option triggered manually? or using ddb streams
 // TODO: test...
 
-// CASES
+// CASES always use update?
 // single:
 //  rm-> del
-//  cr-> upd
+//  cr-> SET url = :i
 // multi:
 //  rm->
-//      main-> upd and set url to first alt. del otherwise
-//      alt-> upd and del if no url
+//      main-> SET url = alturls[0], REMOVE alturls[0] if alturls exists | use returnvals all_new or error code to del if empty alts
+//      alt-> REMOVE alturls[:n]
 //  cr->
-//      main-> upd overwrites
-//      alt-> upd list_append, set url if none
+//      main-> SET url = :i
+//      alt-> SET alturls = list_append(alturls, :il), url = if_not_exists(url, :i)
 
 function updateIndex(eventType, bucket, key) {
     /*
@@ -34,7 +33,8 @@ function updateIndex(eventType, bucket, key) {
      * or
      * table/category/filename
      *
-     * _filename means filename is main file for this object
+     * 0filename means filename is main file for this object
+     * #filename, other numbers indicate alt file clockwise
      */
 
     var tokens = key.split('/');
@@ -52,7 +52,7 @@ function updateIndex(eventType, bucket, key) {
     var isMain = true;
 
     if (tokens.length == 4) {
-        isMain = (tokens[3][0] == '_');
+        isMain = (tokens[3][0] == '0');
     } else {
         // Remove file extension from name
         itemName = itemName.split('.')[0];
