@@ -12,6 +12,7 @@ var s3 = new AWS.S3('2006-03-01');
 var dynamodb = new AWS.DynamoDB.DocumentClient('2012-08-10');
 
 // TODO: test... generate events and use localdynamo
+// TODO: implement some form of sync to handle unexepected dicrepancies
 
 /*
 function defaultCallback(err, data) {
@@ -41,6 +42,11 @@ function upsert(params, key, itemIsMain, context) {
 function remove(params, key, itemIsMain, context) {
 
     if (itemIsMain) {
+         /*
+          * TODO: in case of rename from 0filename to 0otherfilename,
+          *         REMOVE is likely to overwrite SET if events are
+          *         not received in the correct order. Use sequencer.
+          */
         params.UpdateExpression = 'REMOVE itemurl';
     } else {
         params.ExpressionAttributeValues = { ":key": dynamodb.createSet([key]) };
