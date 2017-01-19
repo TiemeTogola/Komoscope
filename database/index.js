@@ -12,6 +12,7 @@ var s3 = new AWS.S3('2006-03-01');
 var dynamodb = new AWS.DynamoDB.DocumentClient('2012-08-10');
 
 // TODO: test... generate events and use localdynamo
+
 /*
 function defaultCallback(err, data) {
     if (err) context.done('Error updating index:' + err);
@@ -50,23 +51,23 @@ function remove(params, key, itemIsMain, context) {
     params.ReturnValues = 'ALL_NEW';
 
     // Update and check state of index item
-    dynamodb.update(params, function(err, data){
+    dynamodb.update(params, function(err, data) {
         if (err) {
             context.done('Error updating index:' + err);
         } else {
             var item = data.Attributes;
             if (item) itemIsEmpty = !('itemurl' in item) && !('alturls' in item);
+
+            // Delete item if all related s3 objects are gone
+            if (itemIsEmpty) {
+                delete params.ReturnValues;
+                dynamodb.delete(params, function(err, data) {
+                    if (err) context.done('Error updating index:' + err);
+                    else context.done();
+                });
+            }
         }
     });
-
-    console.log('******** ' + itemIsEmpty);
-    // Delete item if all related s3 objects are gone
-    if (itemIsEmpty) {
-        dynamodb.delete(params, function(err, data) {
-            if (err) context.done('Error updating index:' + err);
-            else context.done();
-        });
-    }
 }
 
 // Parse event information
