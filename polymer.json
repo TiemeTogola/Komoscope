@@ -1,6 +1,6 @@
 {
   "entrypoint": "index.html",
-  "shell": "src/Komoscope-app/Komoscope-app.html",
+  "shell": "src/Komoscope-app.html",
   "sources": [
     "src/**/*",
     "bower.json"

@@ -13,8 +13,8 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/neon-animation/neon-animation-runner-behavior.html">
 <link rel="import" href="../../bower_components/neon-animation/animations/slide-from-top-animation.html">
-<link rel="import" href="../../bower_components/polymer-simple-slider/simple-slider.html">
 
+<link rel="import" href="main-page.html">
 
 <!--
   TODO:
@@ -116,16 +116,7 @@
           attr-for-selected="name"
           fallback-selection="notfound">
           <!--different components for each page-->
-        <div name="" style="background-color:transparent;height:100%">
-          <simple-slider style="width:700px; height:500px; border:solid 1px blue; padding-left:40px"
-              transition-property="opacity"
-              start-value="0"
-              visible-value="1"
-              end-value="0">
-            <img src="/p1.jpg" height="500" width="500"/>
-            <img src="/p2.jpg" height="500" width="500"/>
-          </simple-slider>
-        </div>
+        <main-page name=""></main-page>
         <div name="artiste" style="background-color:transparent;height:100%">
           <iron-image alt="L'artiste au travail" src="/mamadou_dehors.jpg"></iron-image>
         </div>

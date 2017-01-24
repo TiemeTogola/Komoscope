@@ -1,0 +1,63 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../../bower_components/polymer-simple-slider/simple-slider.html">
+
+
+<dom-module id="main-page">
+  <template>
+    <style>
+      :host {
+        height: 100%;
+      }
+    </style>
+
+    <simple-slider style="width:700px; height:500px; border:solid 1px blue; padding-left:40px"
+        transition-property="opacity"
+        start-value="0"
+        visible-value="1"
+        end-value="0">
+      <img src="https://komoscope.com/[[images]]" height="500" width="500"/>
+    </simple-slider>
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+        is: 'main-page',
+
+        properties: {
+          images: {
+            type: Array
+          }
+        },
+
+        ready: function() {
+          // Configure unauthenticated access with anon identity pool
+          AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+            IdentityPoolId: 'us-east-1:b93d8993-e859-4328-a9e7-0e0d8d12e361',
+          });
+          AWS.config.region = 'us-east-1';
+
+          var dynamodb = new AWS.DynamoDB.DocumentClient();
+
+          var params = {
+            TableName: "oeuvres",
+            Key: {
+              category: "sculpture",
+              name: "Transe"
+            }
+          }
+
+          var me = this;
+          dynamodb.get(params, function(err, data) {
+              me.images = [data.Item.itemurl];
+              console.log(me.images);
+          });
+        }
+
+    });
+  </script>
+
+</dom-module>
