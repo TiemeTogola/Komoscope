@@ -130,6 +130,7 @@ exports.handler = function(event, context) {
 
     // TODO: process events in batches???
     // TODO: update object in s3 to replace spaces with underscores (check that name is available)
+    // TODO: rename to valid jpg extension (jpeg, JPG, etc.)
     var key = decodeURIComponent(object.key.replace(/\+/g, ' '));
 
     console.log(eventType + ': ' + bucket + '/' + key);
