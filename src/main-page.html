@@ -1,7 +1,5 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-
-<link rel="import" href="../../bower_components/polymer-simple-slider/simple-slider.html">
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/simple-slider/1.0.0/simpleslider.js"></script>
 
 <dom-module id="main-page">
   <template>
@@ -11,18 +9,15 @@
       }
     </style>
 
-    <simple-slider style="width:700px; height:500px; border:solid 1px blue; padding-left:40px"
-        transition-property="opacity"
-        start-value="0"
-        visible-value="1"
-        end-value="0">
-      <img src="https://komoscope.com/[[images]]" height="500" width="500"/>
-    </simple-slider>
+    <div id="sslider" style="width:700px; height:500px; border:solid 1px blue; padding-left:40px;">
+      <template id="temp" is="dom-repeat" items=[[images]]>
+        <img src="https://komoscope.com/[[item]]" height="500" width="500"/>
+      </template>
+    </div>
 
   </template>
 
   <script>
-
     Polymer({
 
         is: 'main-page',
@@ -33,7 +28,7 @@
           }
         },
 
-        ready: function() {
+        created: function() {
           // Configure unauthenticated access with anon identity pool
           AWS.config.credentials = new AWS.CognitoIdentityCredentials({
             IdentityPoolId: 'us-east-1:b93d8993-e859-4328-a9e7-0e0d8d12e361',
@@ -52,11 +47,25 @@
 
           var me = this;
           dynamodb.get(params, function(err, data) {
-              me.images = [data.Item.itemurl];
-              console.log(me.images);
+            me.images = data.Item.alturls.values;
+          });
+        },
+
+        attached: function() {
+          // Reload slider if children nodes are added / removed
+          var ss = document.getElementById('sslider');
+          Polymer.dom(ss).observeNodes(function(info) {
+            simpleslider.getSlider({
+              container: ss,
+              children: ss.querySelectorAll('img'),
+              prop: 'opacity',
+              unit: '',
+              init: 0,
+              show: 1,
+              end: 0
+            });
           });
         }
-
     });
   </script>
 
