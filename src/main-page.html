@@ -16,8 +16,9 @@
       }
     </style>
 
+    <!--use iron-image or some box-->
     <div id="sslider" style="margin: 4% auto; width:600px; height:500px;">
-      <template id="temp" is="dom-repeat" items=[[images]]>
+      <template is="dom-repeat" items=[[images]]>
         <div style="width:600px; height:500px;">
           <img src="https://komoscope.com/[[item]]"/>
         </div>
@@ -48,16 +49,16 @@
 
           // TODO: randomize showcased pictures
           var params = {
-            TableName: "oeuvres",
-            Key: {
-              category: "sculpture",
-              name: "Transe"
+            TableName : "oeuvres",
+            KeyConditionExpression: "category = :ct",
+            ExpressionAttributeValues: {
+              ":ct": "sculpture"
             }
-          }
+          };
 
           var me = this;
-          dynamodb.get(params, function(err, data) {
-            me.images = data.Item.alturls.values;
+          dynamodb.query(params, function(err, data) {
+            me.images = data.Items.map(i => { return i.itemurl; });
           });
         },
 
