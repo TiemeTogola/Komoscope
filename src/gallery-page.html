@@ -1,0 +1,76 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/app-layout/app-grid/app-grid-style.html">
+
+<dom-module id="gallery-page">
+  <template>
+    <style include="app-grid-style">
+      :host {
+        height: 100%;
+        --app-grid-columns: 3;
+        --app-grid-item-height: 500px;
+      }
+      //TODO: use css selectors to expand larger images to multiple columns
+      ul {
+        padding: 0;
+        list-style: none;
+      }
+      img {
+        display: block;
+        margin: auto;
+        position: relative;
+        max-width: 100%;
+        max-height: 100%;
+      }
+    </style>
+
+    <ul class="app-grid">
+      <template is="dom-repeat" items="[[images]]">
+        <li class="item">
+          <div style="width:600px; height:500px;">
+            <img src="https://komoscope.com/[[item]]"/>
+          </div>
+        </li>
+      </template>
+    </ul>
+
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'gallery-page',
+
+      properties: {
+        images: {
+          type: Array
+        }
+      },
+
+      created: function() {
+        //TODO: shouldn't be creating an aws client on every page
+
+        // Configure unauthenticated access with anon identity pool
+        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+          IdentityPoolId: 'us-east-1:b93d8993-e859-4328-a9e7-0e0d8d12e361',
+        });
+        AWS.config.region = 'us-east-1';
+
+        var dynamodb = new AWS.DynamoDB.DocumentClient();
+
+        var params = {
+          TableName: "oeuvres",
+          Key: {
+            category: "sculpture",
+            name: "Transe"
+          }
+        }
+
+        var me = this;
+        dynamodb.get(params, function(err, data) {
+          me.images = data.Item.alturls.values;
+        });
+      }
+
+    });
+  </script>
+</dom-module>

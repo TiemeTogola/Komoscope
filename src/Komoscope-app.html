@@ -15,30 +15,30 @@
 <link rel="import" href="../../bower_components/neon-animation/animations/slide-from-top-animation.html">
 
 <link rel="import" href="main-page.html">
+<link rel="import" href="gallery-page.html">
 
 <!--
   TODO:
+//make everything responsive
 //options for changing the visualization configuration of the gallery
 //add pages: photography, multimedia, sound recordings, music player...
 //big image that fades to black with title and navigation at the edge. condense on scroll...
 //random images slide on home page, go to relevant page on click
 //use animations in image viewers for transitions, see grid animation demo
 //transitions between site sections???
-//dom-repeat
 
 //google-youtube
 //app-localize-behavior
 
 //app-grid + iron-list
 //paper-card (put images in those?)
+//iron-image
 //app-box (parallax)
 //paper-dialog
 //paper-fab
 //paper-dropdown-menu
-//paper-material
 //paper-tabs
 //paper-tooltip
-//iron-image
 -->
 
 <dom-module id="Komoscope-app">
@@ -120,7 +120,8 @@
         <div name="artiste" style="background-color:transparent;height:100%">
           <iron-image alt="L'artiste au travail" src="/mamadou_dehors.jpg"></iron-image>
         </div>
-        <div name="sculpture" style="background-color:transparent;height:100%"></div>
+        <gallery-page name="sculpture"></gallery-page>
+        <!--<div name="sculpture" style="background-color:transparent;height:100%"></div>-->
         <div name="dessin" style="background-color:transparent;height:100%"></div>
         <div name="peinture" style="background-color:transparent;height:100%"></div>
         <div name="notfound" style="background-color:red;height:100%"></div>
